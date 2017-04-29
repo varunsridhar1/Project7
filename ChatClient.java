@@ -20,9 +20,12 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class ChatClient {
-	private BufferedReader reader;
-	private PrintWriter writer;
+	//private BufferedReader reader;
+	//private PrintWriter writer;
+	private ObjectInputStream reader;
+	private ObjectOutputStream writer;
 	private ClientView view;
+	private String username;
 	
 	public void run() throws Exception {
 		setUpNetworking();
@@ -56,29 +59,39 @@ public class ChatClient {
 		@SuppressWarnings("resource")
 		Socket sock = new Socket("127.0.0.1", 4242);
 		InputStreamReader streamReader = new InputStreamReader(sock.getInputStream());
-		reader = new BufferedReader(streamReader);
-		writer = new PrintWriter(sock.getOutputStream());
+		//reader = new BufferedReader(streamReader);
+		//writer = new PrintWriter(sock.getOutputStream());
+		writer = new ObjectOutputStream(new BufferedOutputStream(sock.getOutputStream()));
+		reader = new ObjectInputStream(new BufferedInputStream(sock.getInputStream()));
 		System.out.println("networking established");
 		Thread readerThread = new Thread(new IncomingReader());
 		readerThread.start();
 	}
 	
-	public void writeMessage(String message) {
-		writer.println(message);
-		writer.flush();
+	public void writeMessage(Message message) {
+		try {
+			writer.writeObject(message);
+			writer.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	
 	class IncomingReader implements Runnable {
 		public void run() {
-			String message;
+			Message message;
 			try {
-				while ((message = reader.readLine()) != null) {
+				while ((message = (Message) reader.readObject()) != null) {
 					if(view != null)
-						view.addText(message + "\n");;
+						view.addText(message.getUsername() + ": " + message.getText() + "\n");;
 				}
 			} catch (IOException ex) {
 				ex.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 	}
@@ -87,4 +100,11 @@ public class ChatClient {
 		this.view = view;
 	}
 	
+	public void setUsername(String username) {
+		this.username = username;;
+	}
+	
+	public String getUsername() {
+		return username;
+	}
 }
