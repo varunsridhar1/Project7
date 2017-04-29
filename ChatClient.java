@@ -26,6 +26,7 @@ public class ChatClient {
 	private ObjectOutputStream writer;
 	private ClientView view;
 	private String username;
+	private ArrayList<String> chatMembers;
 	
 	public void run() throws Exception {
 		setUpNetworking();
@@ -58,11 +59,11 @@ public class ChatClient {
 	private void setUpNetworking() throws Exception {
 		@SuppressWarnings("resource")
 		Socket sock = new Socket("127.0.0.1", 4242);
-		InputStreamReader streamReader = new InputStreamReader(sock.getInputStream());
+		//InputStreamReader streamReader = new InputStreamReader(sock.getInputStream());
 		//reader = new BufferedReader(streamReader);
 		//writer = new PrintWriter(sock.getOutputStream());
-		writer = new ObjectOutputStream(new BufferedOutputStream(sock.getOutputStream()));
-		reader = new ObjectInputStream(new BufferedInputStream(sock.getInputStream()));
+		writer = new ObjectOutputStream(sock.getOutputStream());
+		reader = new ObjectInputStream(sock.getInputStream());
 		System.out.println("networking established");
 		Thread readerThread = new Thread(new IncomingReader());
 		readerThread.start();
@@ -84,8 +85,9 @@ public class ChatClient {
 			Message message;
 			try {
 				while ((message = (Message) reader.readObject()) != null) {
-					if(view != null)
-						view.addText(message.getUsername() + ": " + message.getText() + "\n");;
+					if(view != null) {
+						view.addText(message);
+					}
 				}
 			} catch (IOException ex) {
 				ex.printStackTrace();
@@ -106,5 +108,13 @@ public class ChatClient {
 	
 	public String getUsername() {
 		return username;
+	}
+	
+	public void setChatMembers(ArrayList<String> chatMembers) {
+		this.chatMembers = chatMembers;
+	}
+	
+	public ArrayList<String> getChatMembers() {
+		return chatMembers;
 	}
 }
