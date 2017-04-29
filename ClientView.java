@@ -97,11 +97,11 @@ public class ClientView extends Application {
 				PasswordBox.clear();
 				if(checkPassword(password, user)){
 					System.out.print("Valid User!");
+					chatClient.setUsername(username);
 					Stage stage = (Stage) userButton.getScene().getWindow();
-					stage.close();
+					stage.close();					
 					errorMessage.setText("");
 					messages = "";
-					viewList.add(this);
 					stage2 = new Stage();
 					stage2.setTitle("MyChat");
 					ClientLoader();
@@ -247,7 +247,8 @@ public class ClientView extends Application {
 	
 	@FXML
 	public void onEnter(ActionEvent ae) {
-		chatClient.writeMessage(messageBox.getText());
+		Message message = new Message(messageBox.getText(), chatClient.getUsername());
+		chatClient.writeMessage(message);
 		messageBox.clear();	
 		String pling = "EHHH.m4a";
 		Media hit = new Media(new File(pling).toURI().toString());
@@ -256,6 +257,7 @@ public class ClientView extends Application {
 	}
 	
 	public void addText(String message) {
+		System.out.println(username);
 		messages += message;
 		Platform.runLater(new Runnable() {
 			@Override
