@@ -11,6 +11,8 @@ import java.util.ArrayList;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -27,10 +29,10 @@ public class ClientView extends Application {
 	private Stage stage2;
 	private AnchorPane root;
 	private static ChatClient chatClient;
-	private static ArrayList<ClientView> viewList = new ArrayList<ClientView>();
 	private String messages = "";
 	private String username = "";
 	private String password = "";
+	private ArrayList<String> chatMembers;
 	
 	@FXML
 	private Label messageLabel;
@@ -53,6 +55,19 @@ public class ClientView extends Application {
 	@FXML
 	private Button userButton;
 	
+	@FXML
+	private ListView<String> userList;
+	
+	@FXML
+	private Button chatButton;
+	
+	@FXML
+	public void initialize() {
+		if(userList != null)
+			userList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+		chatMembers = new ArrayList<String>();
+	}
+	
 	public static void setClient(ChatClient client) {
 		chatClient = client;
 	}
@@ -64,8 +79,8 @@ public class ClientView extends Application {
 		this.primaryStage.setTitle("SLIPPPPPPPP DAYYYYYYYYY");
 		
 		LoginLoader();
-		
 	}
+	
 	
 	public void LoginLoader() {
 		try {
@@ -80,6 +95,7 @@ public class ClientView extends Application {
 			e.printStackTrace();
 		}
 	}
+	
 	
 	@FXML
 	public void onLogin(ActionEvent ae) {
@@ -96,14 +112,14 @@ public class ClientView extends Application {
 				password = PasswordBox.getText();
 				PasswordBox.clear();
 				if(checkPassword(password, user)){
-					System.out.print("Valid User!");
+					System.out.println("Valid User!");
 					chatClient.setUsername(username);
 					Stage stage = (Stage) userButton.getScene().getWindow();
 					stage.close();					
 					errorMessage.setText("");
 					messages = "";
 					stage2 = new Stage();
-					stage2.setTitle("MyChat");
+					stage2.setTitle("MyChat: " + chatClient.getUsername());
 					ClientLoader();
 				}
 				else{
@@ -215,8 +231,8 @@ public class ClientView extends Application {
 			 }
 	}
 	
-	/*
-	@Override
+	
+	/*@Override
 	public void start(Stage primaryStage) {
 		messages = "";
 		viewList.add(this);
@@ -241,34 +257,63 @@ public class ClientView extends Application {
 	
 	@FXML
 	public void startChat(ActionEvent ae) {
-		startButton.disarm();
+		//startButton.setDisable(true);
+		try {
+		 	//String allmyUsers = "";
+			chatClient.setChatMembers(chatMembers);
+		 	String line = "";
+			FileReader fileReader = new FileReader("TopSecret_User.txt");
+			@SuppressWarnings("resource")
+			BufferedReader bufferedReader = new BufferedReader(fileReader);
+			ArrayList<String> userArrayList = new ArrayList<String>();
+			while ((line = bufferedReader.readLine())!= null){
+				if(!line.equals(chatClient.getUsername()))
+					userArrayList.add(line);
+			}
+			ObservableList<String> userObsList = FXCollections.observableArrayList(userArrayList);
+			userList.setItems(userObsList);
+		} 
+		catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		catch(IOException ex){
+			 ex.printStackTrace();
+		 }
+	}
+	
+	@FXML
+	public void onChat(ActionEvent ae) {
+		chatMembers.add(chatClient.getUsername());
+		chatMembers.addAll(userList.getSelectionModel().getSelectedItems());
+		//chatMembers.add("sai");
+		//chatMembers.add("sriram");
 		chatClient.setView(this);
 	}
 	
 	@FXML
 	public void onEnter(ActionEvent ae) {
-		Message message = new Message(messageBox.getText(), chatClient.getUsername());
+		Message message = new Message(messageBox.getText(), chatClient.getUsername(), chatClient.getChatMembers());
 		chatClient.writeMessage(message);
 		messageBox.clear();	
-		String pling = "EHHH.m4a";
-		Media hit = new Media(new File(pling).toURI().toString());
-		MediaPlayer mediaPlayer = new MediaPlayer(hit);
-		mediaPlayer.play();
 	}
 	
-	public void addText(String message) {
-		System.out.println(username);
-		messages += message;
-		Platform.runLater(new Runnable() {
-			@Override
-			public void run() {
-				messageLabel.setText(messages);
-			}
-		});
+	public void addText(Message message) {
+		System.out.println(chatClient.getChatMembers());
+		System.out.println(message.getReceivers());
+		if(chatClient.getChatMembers().contains(message.getUsername()) && chatClient.getChatMembers().containsAll(message.getReceivers())) {
+			messages += message.getUsername() + ": " + message.getText() + "\n";
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					messageLabel.setText(messages);
+					if(!chatClient.getUsername().equals(message.getUsername())) {
+						String pling = "EHHH.m4a";
+						Media hit = new Media(new File(pling).toURI().toString());
+						MediaPlayer mediaPlayer = new MediaPlayer(hit);
+						mediaPlayer.play();
+					}
+				}
+			});
+		}
 	}
-	
-	public static ArrayList<ClientView> getViews() {
-		return viewList;
-	}
-	
 }
