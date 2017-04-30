@@ -8,21 +8,26 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Random;
 
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 public class ClientView extends Application {
 	private Stage primaryStage;
@@ -35,11 +40,13 @@ public class ClientView extends Application {
 	private String password = "";
 	private ArrayList<String> chatMembers;
 	
+	private HashMap<Label, String> myEmojis;
+	
 	//@FXML
 	//private Label messageLabel;
 	
 	@FXML
-	private ListView<String> messageList;
+	private ListView<Label> messageList;
 	
 	@FXML
 	private TextField messageBox;
@@ -66,11 +73,34 @@ public class ClientView extends Application {
 	private Button chatButton;
 	
 	@FXML
+	private ComboBox<Label> selectEmoji;
+	
+	@FXML
 	public void initialize() {
-		if(userList != null) 
+		if(userList != null) {
 			userList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-		if(messageList != null) 
-			messageList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+			try {
+			 	//String allmyUsers = "";
+				//chatClient.setChatMembers(chatMembers);
+			 	String line = "";
+				FileReader fileReader = new FileReader("TopSecret_User.txt");
+				@SuppressWarnings("resource")
+				BufferedReader bufferedReader = new BufferedReader(fileReader);
+				ArrayList<String> userArrayList = new ArrayList<String>();
+				while ((line = bufferedReader.readLine())!= null){
+					if(!line.equals(chatClient.getUsername()))
+						userArrayList.add(line);
+				}
+				ObservableList<String> userObsList = FXCollections.observableArrayList(userArrayList);
+				userList.setItems(userObsList);
+			} 
+			catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+			catch(IOException ex){
+				 ex.printStackTrace();
+			 }
+		}
 		chatMembers = new ArrayList<String>();
 		//messages = new ArrayList<String>();
 	}
@@ -84,6 +114,13 @@ public class ClientView extends Application {
 		username = "";
 		this.primaryStage = primaryStage;
 		this.primaryStage.setTitle("SLIPPPPPPPP DAYYYYYYYYY");
+		this.primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent t) {
+                Platform.exit();
+                System.exit(0);
+            }
+		});
 		
 		LoginLoader();
 	}
@@ -98,6 +135,7 @@ public class ClientView extends Application {
             Scene scene = new Scene(root);
             primaryStage.setScene(scene);
             primaryStage.show();
+            
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -126,6 +164,13 @@ public class ClientView extends Application {
 					errorMessage.setText("");
 					stage2 = new Stage();
 					stage2.setTitle("MyChat: " + chatClient.getUsername());
+					stage2.setOnCloseRequest(new EventHandler<WindowEvent>() {
+			            @Override
+			            public void handle(WindowEvent t) {
+			                Platform.exit();
+			                System.exit(0);
+			            }
+					});
 					ClientLoader();
 				}
 				else{
@@ -266,7 +311,7 @@ public class ClientView extends Application {
 		startButton.setDisable(true);
 		try {
 		 	//String allmyUsers = "";
-			chatClient.setChatMembers(chatMembers);
+			//chatClient.setChatMembers(chatMembers);
 		 	String line = "";
 			FileReader fileReader = new FileReader("TopSecret_User.txt");
 			@SuppressWarnings("resource")
@@ -289,34 +334,80 @@ public class ClientView extends Application {
 	
 	@FXML
 	public void onChat(ActionEvent ae) {
+		Conversation convo = new Conversation();
 		chatMembers.add(chatClient.getUsername());
 		chatMembers.addAll(userList.getSelectionModel().getSelectedItems());
 		//chatMembers.add("sai");
 		//chatMembers.add("sriram");
+		convo.setMembers(chatMembers);
 		messages = new ArrayList<String>();
+		chatClient.writeMessage(convo);
+		
+		initializeEmojis();
+		
+		ArrayList<Label> emojis = new ArrayList<Label>();
+		for(Label l: myEmojis.keySet())
+			emojis.add(l);
+		ObservableList<Label> obsEmojis = FXCollections.observableArrayList(emojis);
+		selectEmoji.setItems(obsEmojis);
+		
 		chatClient.setView(this);
 	}
 	
 	@FXML
 	public void onEnter(ActionEvent ae) {
-		Message message = new Message(messageBox.getText(), chatClient.getUsername(), chatClient.getChatMembers());
+		Message message = new Message(messageBox.getText(), chatClient.getUsername(), chatMembers);
 		chatClient.writeMessage(message);
 		messageBox.clear();	
 	}
 	
+	@FXML
+	public void sendEmoji(ActionEvent ae) {
+		String path = myEmojis.get(selectEmoji.getValue());
+		Message message = new Message(path, chatClient.getUsername(), chatMembers);
+		chatClient.writeMessage(message);
+		selectEmoji.setPromptText("Emoji:");
+	}
+	
 	public void addText(Message message) {
-		System.out.println(chatClient.getChatMembers());
-		System.out.println(message.getReceivers());
-		if(chatClient.getChatMembers().contains(message.getUsername()) && chatClient.getChatMembers().containsAll(message.getReceivers())) {
-			messages.add(message.getUsername() + ": " + message.getText() + "\n");
-			ObservableList<String> obsMessages = FXCollections.observableArrayList(messages);
+		if(chatMembers.contains(message.getUsername()) && chatMembers.containsAll(message.getReceivers())) {
+			if(message.getImage() != null)
+				messages.add(message.getUsername() + ": " + message.getImage());
+			else
+				messages.add(message.getUsername() + ": " + message.getText() + "\n");
+			ArrayList<Label> labels = new ArrayList<Label>();
+			for(String s: messages) {
+				if(s.contains(".png")) {
+					Label label = new Label();
+					int fileIndex = s.indexOf(':') + 2;
+					label.setContentDisplay(ContentDisplay.RIGHT);
+					label.setText(s.substring(0, fileIndex));
+					Image image = new Image(new File(s.substring(fileIndex, s.length() - 1)).toURI().toString());
+					ImageView iv = new ImageView(image);
+					label.setGraphic(iv); 
+					labels.add(label);
+				}
+				else {
+					Label label = new Label();
+					label.setText(s);
+					labels.add(label);
+				}
+			}
+			ObservableList<Label> obsMessages = FXCollections.observableArrayList(labels);
 			Platform.runLater(new Runnable() {
 				@Override
 				public void run() {
 					messageList.setItems(obsMessages);
 					messageList.scrollTo(messageList.getItems().size() - 1);
+					ArrayList<String> sounds = new ArrayList<String>();
+					sounds.add("EHHH.mp4");
+					sounds.add("SlipDay.mp4");
+					sounds.add("YaKnow.mp4");
+					sounds.add("Method.mp4");
 					if(!chatClient.getUsername().equals(message.getUsername())) {
-						String pling = "EHHH.m4a";
+						Random rand = new Random();
+						int soundChoice = rand.nextInt(4);
+						String pling = sounds.get(soundChoice);
 						Media hit = new Media(new File(pling).toURI().toString());
 						MediaPlayer mediaPlayer = new MediaPlayer(hit);
 						mediaPlayer.play();
@@ -325,4 +416,60 @@ public class ClientView extends Application {
 			});
 		}
 	}
+	
+	public void addHistory(Conversation convo){
+		if(chatMembers.containsAll(convo.members)) {
+			messages = convo.getConversation();
+			ObservableList<String> obsMessages = FXCollections.observableArrayList(messages);
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					//messageList.setItems(obsMessages);
+					messageList.scrollTo(messageList.getItems().size() - 1);
+				}
+			});
+		}
+	}
+	
+	private void initializeEmojis() {
+		myEmojis = new HashMap<Label, String>();
+		Label label = new Label();
+		Image image = new Image(new File("1f60a.png").toURI().toString());
+		ImageView iv = new ImageView(image);
+		label.setGraphic(iv); 
+		myEmojis.put(label, "1f60a.png");
+		
+		label = new Label();
+		image = new Image(new File("1f60b.png").toURI().toString());
+		iv = new ImageView(image);
+		label.setGraphic(iv); 
+		myEmojis.put(label, "1f60b.png");
+		
+		label = new Label();
+		image = new Image(new File("1f60c.png").toURI().toString());
+		iv = new ImageView(image);
+		label.setGraphic(iv); 
+		myEmojis.put(label, "1f60c.png");
+		
+		label = new Label();
+		image = new Image(new File("1f60d.png").toURI().toString());
+		iv = new ImageView(image);
+		label.setGraphic(iv); 
+		myEmojis.put(label, "1f60d.png");
+		
+		label = new Label();
+		image = new Image(new File("1f60e.png").toURI().toString());
+		iv = new ImageView(image);
+		label.setGraphic(iv); 
+		myEmojis.put(label, "1f60e.png");
+		
+		label = new Label();
+		image = new Image(new File("1f60f.png").toURI().toString());
+		iv = new ImageView(image);
+		label.setGraphic(iv); 
+		myEmojis.put(label, "1f60f.png");
+		
+	}
+	
+	
 }

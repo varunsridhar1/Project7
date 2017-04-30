@@ -13,6 +13,12 @@ public class Message implements Serializable {
 	//private int Receiver; 
 	private String username;
 	private ArrayList<String> receivers;
+	private String image;
+	
+	public Message(){
+		this.text = "";
+		this.username = "";
+	}
 	
 	public Message(String text, String username, ArrayList<String> receivers) {
 		this.text = text;
@@ -51,5 +57,13 @@ public class Message implements Serializable {
 	}
 	public ArrayList<String> getReceivers() {
 		return receivers;
+	}
+	
+	public void setImage(String image) {
+		this.image = image;
+	}
+	
+	public String getImage() {
+		return image;
 	}
 }	

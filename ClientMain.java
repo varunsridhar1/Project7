@@ -4,7 +4,8 @@ public class ClientMain {
 	public static void main(String[] args)  {
 		try {
 			new ChatClient().run();
-		} catch (Exception e) {
+		} 
+		catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

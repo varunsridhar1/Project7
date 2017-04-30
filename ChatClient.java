@@ -2,22 +2,6 @@ package assignment7;
 
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
-
-import javax.swing.*;
-
-import javafx.application.Application;
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.AnchorPane;
-import javafx.stage.Stage;
-
-import java.awt.*;
-import java.awt.event.*;
 
 public class ChatClient {
 	//private BufferedReader reader;
@@ -26,7 +10,6 @@ public class ChatClient {
 	private ObjectOutputStream writer;
 	private ClientView view;
 	private String username;
-	private ArrayList<String> chatMembers;
 	
 	public void run() throws Exception {
 		setUpNetworking();
@@ -85,12 +68,18 @@ public class ChatClient {
 			Message message;
 			try {
 				while ((message = (Message) reader.readObject()) != null) {
-					if(view != null) {
+					if(view != null && !(message instanceof Conversation)) {
 						view.addText(message);
+					}
+					if(message instanceof Conversation){
+						Conversation convo = (Conversation) message;
+						if(view != null && convo != null)
+							view.addHistory(convo);
 					}
 				}
 			} catch (IOException ex) {
-				ex.printStackTrace();
+				if(ex instanceof SocketException)
+					System.exit(0);
 			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -103,18 +92,10 @@ public class ChatClient {
 	}
 	
 	public void setUsername(String username) {
-		this.username = username;;
+		this.username = username;
 	}
 	
 	public String getUsername() {
 		return username;
-	}
-	
-	public void setChatMembers(ArrayList<String> chatMembers) {
-		this.chatMembers = chatMembers;
-	}
-	
-	public ArrayList<String> getChatMembers() {
-		return chatMembers;
 	}
 }

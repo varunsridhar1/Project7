@@ -15,10 +15,11 @@ public class ClientObserver extends ObjectOutputStream implements Observer {
 	@Override
 	public void update(Observable o, Object arg) {
 		try {
+			ChatServer.setRemove(this);
 			this.writeObject(arg); //writer.println(arg);
 			this.flush(); //writer.flush();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			o.deleteObserver(this);
 			e.printStackTrace();
 		} 
 	}
