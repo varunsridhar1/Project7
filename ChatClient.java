@@ -59,11 +59,11 @@ public class ChatClient {
 	private void setUpNetworking() throws Exception {
 		@SuppressWarnings("resource")
 		Socket sock = new Socket("127.0.0.1", 4242);
-		//InputStreamReader streamReader = new InputStreamReader(sock.getInputStream());
+		InputStreamReader streamReader = new InputStreamReader(sock.getInputStream());
 		//reader = new BufferedReader(streamReader);
 		//writer = new PrintWriter(sock.getOutputStream());
-		writer = new ObjectOutputStream(sock.getOutputStream());
-		reader = new ObjectInputStream(sock.getInputStream());
+		writer = new ObjectOutputStream(new BufferedOutputStream(sock.getOutputStream()));
+		reader = new ObjectInputStream(new BufferedInputStream(sock.getInputStream()));
 		System.out.println("networking established");
 		Thread readerThread = new Thread(new IncomingReader());
 		readerThread.start();

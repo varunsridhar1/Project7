@@ -29,17 +29,13 @@ public class ClientView extends Application {
 	private Stage stage2;
 	private AnchorPane root;
 	private static ChatClient chatClient;
-	//private String messages = "";
-	private ArrayList<String> messages;
+	private String messages = "";
 	private String username = "";
 	private String password = "";
 	private ArrayList<String> chatMembers;
 	
-	//@FXML
-	//private Label messageLabel;
-	
 	@FXML
-	private ListView<String> messageList;
+	private Label messageLabel;
 	
 	@FXML
 	private TextField messageBox;
@@ -67,12 +63,9 @@ public class ClientView extends Application {
 	
 	@FXML
 	public void initialize() {
-		if(userList != null) 
+		if(userList != null)
 			userList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-		if(messageList != null) 
-			messageList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		chatMembers = new ArrayList<String>();
-		//messages = new ArrayList<String>();
 	}
 	
 	public static void setClient(ChatClient client) {
@@ -124,6 +117,7 @@ public class ClientView extends Application {
 					Stage stage = (Stage) userButton.getScene().getWindow();
 					stage.close();					
 					errorMessage.setText("");
+					messages = "";
 					stage2 = new Stage();
 					stage2.setTitle("MyChat: " + chatClient.getUsername());
 					ClientLoader();
@@ -263,7 +257,7 @@ public class ClientView extends Application {
 	
 	@FXML
 	public void startChat(ActionEvent ae) {
-		startButton.setDisable(true);
+		//startButton.setDisable(true);
 		try {
 		 	//String allmyUsers = "";
 			chatClient.setChatMembers(chatMembers);
@@ -293,34 +287,28 @@ public class ClientView extends Application {
 		chatMembers.addAll(userList.getSelectionModel().getSelectedItems());
 		//chatMembers.add("sai");
 		//chatMembers.add("sriram");
-		messages = new ArrayList<String>();
 		chatClient.setView(this);
 	}
 	
 	@FXML
 	public void onEnter(ActionEvent ae) {
-		Message message = new Message(messageBox.getText(), chatClient.getUsername(), chatClient.getChatMembers());
+		Message message = new Message(messageBox.getText(), chatClient.getUsername());
 		chatClient.writeMessage(message);
 		messageBox.clear();	
 	}
 	
 	public void addText(Message message) {
 		System.out.println(chatClient.getChatMembers());
-		System.out.println(message.getReceivers());
-		if(chatClient.getChatMembers().contains(message.getUsername()) && chatClient.getChatMembers().containsAll(message.getReceivers())) {
-			messages.add(message.getUsername() + ": " + message.getText() + "\n");
-			ObservableList<String> obsMessages = FXCollections.observableArrayList(messages);
+		if(chatClient.getChatMembers().contains(message.getUsername())) {
+			messages += message.getUsername() + ": " + message.getText() + "\n";
 			Platform.runLater(new Runnable() {
 				@Override
 				public void run() {
-					messageList.setItems(obsMessages);
-					messageList.scrollTo(messageList.getItems().size() - 1);
-					if(!chatClient.getUsername().equals(message.getUsername())) {
-						String pling = "EHHH.m4a";
-						Media hit = new Media(new File(pling).toURI().toString());
-						MediaPlayer mediaPlayer = new MediaPlayer(hit);
-						mediaPlayer.play();
-					}
+					messageLabel.setText(messages);
+					String pling = "EHHH.m4a";
+					Media hit = new Media(new File(pling).toURI().toString());
+					MediaPlayer mediaPlayer = new MediaPlayer(hit);
+					mediaPlayer.play();
 				}
 			});
 		}

@@ -28,7 +28,7 @@ public class ChatServer extends Observable {
 		public ClientHandler(Socket clientSocket) {
 			Socket sock = clientSocket;
 			try {
-				reader = new ObjectInputStream(sock.getInputStream());
+				reader = new ObjectInputStream(new BufferedInputStream(sock.getInputStream()));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
