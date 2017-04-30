@@ -9,10 +9,14 @@ public class Message implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 	private String text;
-	//private int Sender;
-	//private int Receiver; 
 	private String username;
 	private ArrayList<String> receivers;
+	private String image;
+	
+	public Message(){
+		this.text = "";
+		this.username = "";
+	}
 	
 	public Message(String text, String username, ArrayList<String> receivers) {
 		this.text = text;
@@ -32,24 +36,18 @@ public class Message implements Serializable {
 	public void setText(String text) {
 		this.text = text;
 	}
-	/*
-	public int getSender() {
-		return Sender;
-	}
-	public void setSender(int sender) {
-		Sender = sender;
-	}
-	public int getReceiver() {
-		return Receiver;
-	}
-	public void setReceiver(int receiver) {
-		Receiver = receiver;
-	}
-	*/
 	public void setReceivers(ArrayList<String> receivers) {
 		this.receivers = receivers;
 	}
 	public ArrayList<String> getReceivers() {
 		return receivers;
+	}
+	
+	public void setImage(String image) {
+		this.image = image;
+	}
+	
+	public String getImage() {
+		return image;
 	}
 }	
